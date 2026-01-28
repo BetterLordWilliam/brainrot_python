@@ -2,6 +2,7 @@ from sys import stdout
 from pathlib import Path
 from argparse import *
 
+from models.video_configuration import VideoConfiguration
 from ui.app import VideoApp
 
 if __name__ == '__main__':
@@ -32,9 +33,8 @@ if __name__ == '__main__':
     )
     pargs = args.parse_args()
 
-    video_path = Path(pargs.video_path)
+    video_configuration = VideoConfiguration()
+    video_configuration.path = Path(pargs.video_path)
 
-    print(video_path)
-
-    app = VideoApp(video_path)
+    app = VideoApp(video_configuration)
     app.run()

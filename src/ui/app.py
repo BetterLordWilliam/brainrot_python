@@ -14,22 +14,19 @@ class VideoApp(App):
 
     CSS_PATH='app.tcss'
 
-    def __init__(self, path: Path):
+    def __init__(self, conf: VideoConfiguration):
         super().__init__()
-        self.__video_configuration = VideoConfiguration()
-        self.__video_configuration.path = path
+        self.__video_configuration = conf
         self.title = 'brainrot'
 
     def __video_ready_state(self) -> bool:
-        if self.__video_configuration is not None:
-            video_configuration = self.__video_configuration
-            return bool(
-                video_configuration.path
-                and ( video_configuration.fps > 0
-                    and video_configuration.width > 0
-                    and video_configuration.height > 0 ) )
-        else:
-            return False
+        video_configuration = self.__video_configuration
+        return bool(
+            video_configuration is not None
+            and video_configuration.path
+            and ( video_configuration.fps > 0
+                and video_configuration.width > 0
+                and video_configuration.height > 0 ) )
 
     def __update_configuration(self):
         if (self.__video_configuration is not None
@@ -38,7 +35,6 @@ class VideoApp(App):
             self.__video_configuration.width    = self.video_widget.size.width
             self.__video_configuration.height   = self.video_widget.size.height
             
-
     def compose(self) -> ComposeResult:
         with Container(id="VideoAppMain"):
             yield Header()
@@ -55,6 +51,7 @@ class VideoApp(App):
     def on_resize(self, event: Resize):
         try:
             self.__update_configuration()
+            
             self.workers.cancel_all()
             self.process_video()
         except:
@@ -79,17 +76,18 @@ class VideoApp(App):
             return
 
         worker = get_current_worker()
+        
         conv_opts = ConverterOptions(
             gradient=video_configuration.gradient,
             width=video_configuration.width,
             height=video_configuration.height
         )
-        
         conv = GrayscaleConverter(conv_opts)
         v = Video(
-            source=video_configuration.path_str,
             converter=conv,
-            frame_clear_strategy=FrameClearStrategy.ANSI_CURSOR_POS
+            source=video_configuration.path_str,
+            fps=video_configuration.fps,
+            frame_clear_strategy=video_configuration.frame_clear_strategy
         )
         
         vg = v.get_ascii_frames()

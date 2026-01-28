@@ -1,10 +1,11 @@
 from pathlib import Path
+from typing import Iterable
 from rich.text import Text
 from textual import work
 from textual.worker import Worker, get_current_worker
 from textual.app import App, ComposeResult
-from textual.containers import Container
-from textual.widgets import Header, Footer, Log, RichLog, Static
+from textual.containers import Container, Grid, HorizontalGroup
+from textual.widgets import Header, Footer, Log, RichLog, Static, Button
 from textual.events import Resize
 from toascii import Video, ColorConverter, GrayscaleConverter, ConverterOptions, gradients, FrameClearStrategy
 
@@ -13,6 +14,7 @@ from models.video_configuration import VideoConfiguration
 class VideoApp(App):
 
     CSS_PATH='app.tcss'
+    COMMANDS = App.COMMANDS
 
     def __init__(self, conf: VideoConfiguration):
         super().__init__()
@@ -28,7 +30,7 @@ class VideoApp(App):
                 and video_configuration.width > 0
                 and video_configuration.height > 0 ) )
 
-    def __update_configuration(self):
+    def __update_configuration(self) -> None:
         if (self.__video_configuration is not None
             and self.video_widget is not None):
 
@@ -38,20 +40,29 @@ class VideoApp(App):
     def compose(self) -> ComposeResult:
         with Container(id="VideoAppMain"):
             yield Header()
-            with Container(id="VideoAppLogContainer"):
-                yield Static(id="VideoAppRender")
+            with Container(id="VideoAppOuterContainer"):
+                with Container(id='VideoAppInnerContainer'):
+                    yield Static(id="VideoAppRender")
+                with Container(id='VideoButtonContainer'):
+                    yield Button('Previous Video', id="PreviousVideo")
+                    yield Button('Next Video', id="NextVideo")
                 yield Log(id="VideoAppLog")
             yield Footer()
 
     def on_mount(self):
         self.video_widget = self.query_one("#VideoAppRender", Static)
         self.log_widget = self.query_one("#VideoAppLog", Log)
-        self.process_video()
+        
+    def on_ready(self):
+        try:
+            self.__update_configuration()
+            self.process_video()
+        except:
+            pass
         
     def on_resize(self, event: Resize):
         try:
             self.__update_configuration()
-            
             self.workers.cancel_all()
             self.process_video()
         except:
@@ -65,16 +76,6 @@ class VideoApp(App):
     def process_video(self):
         video_configuration = self.__video_configuration
         
-        if (self.log_widget is not None):
-            self.log_widget.write_line(','.join((
-                str(self.__video_configuration.width), 
-                str(self.__video_configuration.height)
-            )))
-            self.log_widget.write_line(str(self.__video_ready_state()))
-
-        if not self.__video_ready_state():
-            return
-
         worker = get_current_worker()
         
         conv_opts = ConverterOptions(
@@ -95,4 +96,5 @@ class VideoApp(App):
             self.call_from_thread(self.video_widget.update, Text.from_ansi(f))
             if worker.is_cancelled:
                 break
+            
 

@@ -3,55 +3,72 @@ from pathlib import Path
 from argparse import *
 from threading import Thread, ThreadError
 from queue import Queue
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import Header, Footer, Log, RichLog, Static
+from textual.events import Resize
 from toascii import Video, ColorConverter, GrayscaleConverter, ConverterOptions, gradients, FrameClearStrategy
-
-TEST_VIDEO_PATH = 'example_video/fisch.mp4'
-
-
-class VideoConfig():
-    def __init__(self, path: Path):
-        self._video_path = path
-        self._video_path_str = path.absolute().as_uri()
-        self._conv_opts = ConverterOptions(
-            gradient=gradients.LOW,
-            width=150,
-            height=70
-        )
-        self._conv = GrayscaleConverter(self._conv_opts)
 
 
 class VideoApp(App):
 
-    def __init__(self, engine: VideoConfig):
+    CSS="""
+#VideoAppLogContainer {
+    height: 100%; width: 100%;
+}
+#VideoAppRender {
+    height: 90%;
+}
+#VideoAppLog {
+    height: 10%;
+}
+"""
+
+    def __init__(self, path: Path):
         super().__init__()
-        self.__ve = engine
+        self._path = path
         self.title = 'brainrot'
 
     def compose(self) -> ComposeResult:
         with Container(id="VideoAppMain"):
             yield Header()
             with Container(id="VideoAppLogContainer"):
-                yield Static(id="VideoAppLog")
+                yield Static(id="VideoAppRender")
+                yield Log(id="VideoAppLog")
             yield Footer()
 
     def on_mount(self):
-        self.log_widget = self.query_one("#VideoAppLog", Static)
-        self.run_worker(self.process_video, thread=True)
+        self.video_widget = self.query_one("#VideoAppRender", Static)
+        self.log_widget = self.query_one("#VideoAppLog", Log)
+
+        self.run_worker(self.process_video, thread=True, exclusive=True)
+
+    def on_resize(self, event: Resize):
+        try:
+            self.log_widget.write_line('resize has occured')
+            # self.workers.cancel_all()
+            self.log_widget.write_line(f'{self.workers.__len__}')
+        except:
+            print('not logging widget')
 
     def process_video(self):
+        video_path = self._path
+        video_path_str = self._path.absolute().as_uri()
+        conv_opts = ConverterOptions(
+            gradient=gradients.LOW,
+            width=self.video_widget.size.width,
+            height=self.video_widget.size.height
+        )
+        conv = GrayscaleConverter(conv_opts)
         v = Video(
-            source=self.__ve._video_path_str,
-            converter=self.__ve._conv,
-            fps=30,
-            loop=False,
+            source=video_path_str,
+            converter=conv,
             frame_clear_strategy=FrameClearStrategy.ANSI_CURSOR_POS
         )
         vg = v.get_ascii_frames()
         for f in vg:
-            self.call_from_thread(self.log_widget.update, f)
+            self.call_from_thread(self.video_widget.update, Text.from_ansi(f, no_wrap=True))
 
 
 if __name__ == '__main__':
@@ -86,6 +103,5 @@ if __name__ == '__main__':
 
     print(video_path)
 
-    engine = VideoConfig(video_path)
-    app = VideoApp(engine)
+    app = VideoApp(video_path)
     app.run()

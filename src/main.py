@@ -4,6 +4,8 @@ from argparse import *
 from threading import Thread, ThreadError
 from queue import Queue
 from rich.text import Text
+from textual import work
+from textual.worker import Worker, get_current_worker
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import Header, Footer, Log, RichLog, Static
@@ -41,19 +43,18 @@ class VideoApp(App):
     def on_mount(self):
         self.video_widget = self.query_one("#VideoAppRender", Static)
         self.log_widget = self.query_one("#VideoAppLog", Log)
-
-        self.run_worker(self.process_video, thread=True, exclusive=True)
+        self.process_video()
 
     def on_resize(self, event: Resize):
         try:
-            self.log_widget.write_line('resize has occured')
-            # self.workers.cancel_all()
-            self.log_widget.write_line(f'{self.workers.__len__}')
+            self.workers.cancel_all()
+            self.process_video()
         except:
-            print('not logging widget')
+            pass
 
+    @work(exclusive=True, thread=True)
     def process_video(self):
-        video_path = self._path
+        worker = get_current_worker()
         video_path_str = self._path.absolute().as_uri()
         conv_opts = ConverterOptions(
             gradient=gradients.LOW,
@@ -68,7 +69,9 @@ class VideoApp(App):
         )
         vg = v.get_ascii_frames()
         for f in vg:
-            self.call_from_thread(self.video_widget.update, Text.from_ansi(f, no_wrap=True))
+            self.call_from_thread(self.video_widget.update, Text.from_ansi(f))
+            if worker.is_cancelled:
+                break
 
 
 if __name__ == '__main__':

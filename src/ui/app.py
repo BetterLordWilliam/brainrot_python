@@ -9,6 +9,7 @@ from textual.widgets import Header, Footer, Log, RichLog, Static, Button
 from textual.events import Resize
 from toascii import Video, ColorConverter, GrayscaleConverter, ConverterOptions, gradients, FrameClearStrategy
 
+from models.video_queue import VideoQueue
 from models.video_configuration import VideoConfiguration
 
 class VideoApp(App):
@@ -16,8 +17,9 @@ class VideoApp(App):
     CSS_PATH='app.tcss'
     COMMANDS = App.COMMANDS
 
-    def __init__(self, conf: VideoConfiguration):
+    def __init__(self, queue: VideoQueue, conf: VideoConfiguration):
         super().__init__()
+        self.__queue = queue
         self.__video_configuration = conf
         self.title = 'brainrot'
 
@@ -36,6 +38,12 @@ class VideoApp(App):
 
             self.__video_configuration.width    = self.video_widget.size.width
             self.__video_configuration.height   = self.video_widget.size.height
+           
+    def __refresh_video(self) -> None:
+        self.__update_configuration()
+        
+        self.workers.cancel_all()
+        self.process_video()
             
     def compose(self) -> ComposeResult:
         with Container(id="VideoAppMain"):
@@ -46,25 +54,22 @@ class VideoApp(App):
                 with Container(id='VideoButtonContainer'):
                     yield Button('Previous Video', id="PreviousVideo")
                     yield Button('Next Video', id="NextVideo")
-                yield Log(id="VideoAppLog")
+                # yield Log(id="VideoAppLog")
             yield Footer()
 
     def on_mount(self):
         self.video_widget = self.query_one("#VideoAppRender", Static)
-        self.log_widget = self.query_one("#VideoAppLog", Log)
+        # self.log_widget = self.query_one("#VideoAppLog", Log)
         
     def on_ready(self):
         try:
-            self.__update_configuration()
-            self.process_video()
+            self.__refresh_video()
         except:
             pass
         
     def on_resize(self, event: Resize):
         try:
-            self.__update_configuration()
-            self.workers.cancel_all()
-            self.process_video()
+            self.__refresh_video()
         except:
             pass
 
@@ -74,6 +79,7 @@ class VideoApp(App):
 
     @work(exclusive=True, thread=True)
     def process_video(self):
+        video_queue = self.__queue
         video_configuration = self.__video_configuration
         
         worker = get_current_worker()
@@ -86,7 +92,7 @@ class VideoApp(App):
         conv = GrayscaleConverter(conv_opts)
         v = Video(
             converter=conv,
-            source=video_configuration.path_str,
+            source=video_queue.video_str,
             fps=video_configuration.fps,
             frame_clear_strategy=video_configuration.frame_clear_strategy
         )

@@ -14,20 +14,13 @@ TEST_VIDEO_PATH = 'example_video/fisch.mp4'
 class VideoConfig():
     def __init__(self, path: Path):
         self._video_path = path
-        self._video_path_bytes = path.read_bytes()
+        self._video_path_str = path.absolute().as_uri()
         self._conv_opts = ConverterOptions(
             gradient=gradients.LOW,
-            width=100,
-            height=100
+            width=150,
+            height=70
         )
         self._conv = GrayscaleConverter(self._conv_opts)
-        self._video = Video(
-            source=self._video_path_bytes,
-            converter=self._conv,
-            fps=30,
-            loop=True,
-            frame_clear_strategy=FrameClearStrategy.ANSI_CURSOR_POS
-        )
 
 
 class VideoApp(App):
@@ -49,7 +42,14 @@ class VideoApp(App):
         self.run_worker(self.process_video, thread=True)
 
     def process_video(self):
-        vg = self.__ve._video.get_ascii_frames()
+        v = Video(
+            source=self.__ve._video_path_str,
+            converter=self.__ve._conv,
+            fps=30,
+            loop=False,
+            frame_clear_strategy=FrameClearStrategy.ANSI_CURSOR_POS
+        )
+        vg = v.get_ascii_frames()
         for f in vg:
             self.call_from_thread(self.log_widget.update, f)
 

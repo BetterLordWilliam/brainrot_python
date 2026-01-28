@@ -1,0 +1,11 @@
+#VideoAppLogContainer {
+    height: 100%; width: 100%;
+}
+
+#VideoAppRender {
+    height: 90%;
+}
+
+#VideoAppLog {
+    height: 10%;
+}

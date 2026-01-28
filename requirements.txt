@@ -1,0 +1,6 @@
+colorama==0.4.6
+numpy==2.0.0
+opencv-python==4.13.0.90
+pydantic==1.10.26
+to-ascii==6.1.1
+typing_extensions==4.15.0

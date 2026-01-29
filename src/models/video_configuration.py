@@ -1,10 +1,9 @@
 from pathlib import Path
-from toascii import gradients, FrameClearStrategy, ConverterOptions, Video, GrayscaleConverter, ColorConverter, HtmlColorConverter
+from toascii import gradients, FrameClearStrategy, ConverterOptions, Video, GrayscaleConverter, ColorConverter, HtmlColorConverter, GrayscaleConverterNim, ColorConverterNim
 
 class VideoConfiguration:
     def __init__(self):
         self.__frame_clear_strategy = FrameClearStrategy.ANSI_CURSOR_POS
-        self.__fps = 30
         self.__path = Path()
         self.__loop = False
         self.__color = False # this is slower than grayscale noticeably
@@ -23,10 +22,6 @@ class VideoConfiguration:
     @frame_clear_strategy.setter
     def frame_clear_strategy(self, fcs: FrameClearStrategy) -> None:
         self.__frame_clear_strategy = fcs
-    
-    @property
-    def fps(self) -> int:
-        return self.__fps
     
     @property
     def width(self) -> int:
@@ -78,7 +73,6 @@ class VideoConfiguration:
         return Video(
             source=self.path_str,
             converter=converter,
-            fps=self.__fps,
             loop=self.__loop
         )
         

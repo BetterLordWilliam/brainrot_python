@@ -35,12 +35,10 @@ class VideoApp(App):
 
     def __video_ready_state(self) -> bool:
         video_configuration = self.__video_configuration
-        return bool(
-            video_configuration is not None
+        return bool( video_configuration is not None
             and video_configuration.path
-            and ( video_configuration.fps > 0
-                and video_configuration.width > 0
-                and video_configuration.height > 0 ) )
+            and video_configuration.width > 0
+            and video_configuration.height > 0 )
 
     def __update_configuration(self) -> None:
         if (self.__video_configuration is not None
@@ -96,7 +94,7 @@ class VideoApp(App):
         for f in self.__video_configuration.video.get_ascii_frames():
             if worker.is_cancelled:
                 break
-            self.call_from_thread(self.video_widget.update, Text.from_ansi(f))
+            self.call_from_thread(self.video_widget.update, f)
             
     def action_next_video(self) -> None:
         # self.notify('next video')

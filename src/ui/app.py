@@ -94,7 +94,7 @@ class VideoApp(App):
         for f in self.__video_configuration.video.get_ascii_frames():
             if worker.is_cancelled:
                 break
-            self.call_from_thread(self.video_widget.update, f)
+            self.call_from_thread(self.video_widget.update, Text.from_ansi(f))
             
     def action_next_video(self) -> None:
         # self.notify('next video')

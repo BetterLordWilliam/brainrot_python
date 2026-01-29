@@ -4,12 +4,11 @@
 
 #VideoAppInnerContainer {
     height: 90%; width: 100%;
-    margin: 2;
     align: center middle;
 }
 
 #VideoAppRender {
-    height: 90%;
+    height: 100%;
     width: 100;
     align: center middle;
 }
@@ -19,9 +18,4 @@
     width: 100%;
     align: center middle;
     layout: horizontal;
-}
-
-#VideoAppLog {
-    height: 10%;
-    width: 100%;
 }

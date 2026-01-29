@@ -5,24 +5,25 @@ class VideoQueue:
         self.__pos = 0
         self.__videos = [Path(p) for p in videos]
     
-    def backward(self) -> Path:
+    def backward(self) -> None:
         self.__pos += 1
         if self.__pos == len(self.__videos):
             self.__pos = 0
     
-    def forward(self):
+    def forward(self) -> None:
         self.__pos -= 1
         if self.__pos < 0:
             self.__pos = len(self.__videos) - 1
             
     @property
-    def video(self):
+    def video(self) -> Path:
         return self.__videos[self.__pos]
     
     @property 
-    def video_str(self):
+    def video_str(self) -> Path:
         return self.__videos[self.__pos].absolute().as_uri()
     
     @property
-    def video_posix(self):
+    def video_posix(self) -> Path:
         return self.__videos[self.__pos].absolute().as_uri()
+
